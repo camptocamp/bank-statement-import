@@ -11,4 +11,4 @@ class AccountBankStatement(models.Model):
     @api.multi
     def reconciliation_widget_preprocess(self):
         return super(AccountBankStatement, self.with_context(
-            no_reassign_empty_ref=True)).reconciliation_widget_preprocess()
+            no_reassign_empty_name=True)).reconciliation_widget_preprocess()

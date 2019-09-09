@@ -18,13 +18,12 @@ class AccountBankStatementLine(models.Model):
         during import name setup to '/' for records without it
         and this makes search results wrong and partner assignment randomly
         """
-        recordset = self
-        if self.env.context.get('no_reassign_empty_ref'):
-            for rec in self:
-                if (
-                    len(vals.keys()) == 1 and 'partner_id' in vals
-                    and rec.name == '/'
-                ):
-                    recordset -= rec
-            return super(AccountBankStatementLine, recordset).write(vals)
+        if (
+            self.env.context.get('no_reassign_empty_name')
+            and len(self) == 1
+            and len(vals.keys()) == 1
+            and 'partner_id' in vals
+            and self.name == '/'
+        ):
+            return True
         return super(AccountBankStatementLine, self).write(vals)
