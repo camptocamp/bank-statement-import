@@ -15,13 +15,15 @@ class AccountBankStatementImport(models.TransientModel):
     def _create_bank_statements(self, stmts_vals):
         """ Set balance_end_real if not already provided by the file."""
 
-        statement_ids, notifications = super()._create_bank_statements(stmts_vals)
-        statements = self.env["account.bank.statement"].browse(statement_ids)
+        statement_line_ids, notifications = super()._create_bank_statements(stmts_vals)
+        statements = self.env["account.bank.statement"].search(
+            [("line_ids", "in", statement_line_ids)]
+        )
         for statement in statements:
             if not statement.balance_end_real:
                 amount = sum(statement.line_ids.mapped("amount"))
                 statement.balance_end_real = statement.balance_start + amount
-        return statement_ids, notifications
+        return statement_line_ids, notifications
 
     def _complete_stmts_vals(self, stmts_vals, journal, account_number):
         """Search partner from partner reference"""
