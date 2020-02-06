@@ -6,6 +6,10 @@ from odoo import fields
 
 
 class TestAccountBankStatementImportMoveLine(common.SavepointCase):
+
+    at_install = False
+    post_install = True
+
     @classmethod
     def setUpClass(cls):
         super(TestAccountBankStatementImportMoveLine, cls).setUpClass()
