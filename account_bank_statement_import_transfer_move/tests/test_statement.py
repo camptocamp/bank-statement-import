@@ -2,6 +2,7 @@
 # Copyright 2020 Tecnativa - Pedro M. Baeza
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 from unittest.mock import patch
+import mock
 
 from odoo.tests.common import SavepointCase
 
@@ -53,8 +54,8 @@ class TestGenerateBankStatement(SavepointCase):
                             "date": "2014-01-05",
                             "name": "Insurance policy 857239PERIOD 01.01.2014 - "
                             "31.12.2014",
-                            "note": "MKB Insurance 859239PERIOD 01.01.2014 - "
-                            "31.12.2014",
+                            # "note": "MKB Insurance 859239PERIOD 01.01.2014 - "
+                            # "31.12.2014",
                             "partner_name": "INSURANCE COMPANY TESTX",
                             "ref": "435005714488-ABNO33052620",
                         },
@@ -90,7 +91,12 @@ class TestGenerateBankStatement(SavepointCase):
                 statement_lines = bank_st_record.line_ids
                 return statement_lines
 
-    def test_statement_import(self):
+    @mock.patch(
+        'odoo.addons.account.models.sequence_mixin.'
+        'SequenceMixin._constrains_date_sequence',
+        side_effect=False,
+    )
+    def test_statement_import(self, use_sequence):
         self.journal.transfer_line = True
         lines = self._load_statement()
         self.assertEqual(len(lines), 2)
