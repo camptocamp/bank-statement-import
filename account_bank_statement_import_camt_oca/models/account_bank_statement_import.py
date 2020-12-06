@@ -34,4 +34,4 @@ class AccountBankStatementImport(models.TransientModel):
                 pass
             # Not a camt file, returning super will call next candidate:
             _logger.debug("Statement file was not a camt file.", exc_info=True)
-        return super(AccountBankStatementImport, self)._parse_file(data_file)
+        return super()._parse_file(data_file)
