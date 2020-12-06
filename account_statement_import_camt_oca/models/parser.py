@@ -10,7 +10,7 @@ from odoo import models
 
 
 class CamtParser(models.AbstractModel):
-    _name = "account.bank.statement.import.camt.parser"
+    _name = "account.statement.import.camt.parser"
     _description = "Account Bank Statement Import CAMT parser"
 
     def parse_amount(self, ns, node):
@@ -68,7 +68,7 @@ class CamtParser(models.AbstractModel):
         )
         # name
         self.add_value_from_node(
-            ns, node, ["./ns:AddtlTxInf"], transaction, "note", join_str="\n"
+            ns, node, ["./ns:AddtlTxInf"], transaction, "payment_ref", join_str="\n"
         )
         # eref
         self.add_value_from_node(
