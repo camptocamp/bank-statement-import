@@ -19,18 +19,18 @@ class TestParser(TransactionCase):
 
     def setUp(self):
         super(TestParser, self).setUp()
-        self.parser = self.env["account.bank.statement.import.camt.parser"]
+        self.parser = self.env["account.statement.import.camt.parser"]
 
     def _do_parse_test(self, inputfile, goldenfile):
         testfile = get_module_resource(
-            "account_bank_statement_import_camt_oca", "test_files", inputfile
+            "account_statement_import_camt_oca", "test_files", inputfile
         )
         with open(testfile, "rb") as data:
             res = self.parser.parse(data.read())
             with tempfile.NamedTemporaryFile(mode="w+", suffix=".pydata") as temp:
                 pprint.pprint(res, temp, width=160)
                 goldenfile_res = get_module_resource(
-                    "account_bank_statement_import_camt_oca", "test_files", goldenfile
+                    "account_statement_import_camt_oca", "test_files", goldenfile
                 )
                 with open(goldenfile_res, "r") as golden:
                     temp.seek(0)
@@ -117,17 +117,17 @@ class TestImport(TransactionCase):
         "SequenceMixin._constrains_date_sequence",
         side_effect=False,
     )
-    def _test_statement_import(self, constraint):
+    def test_statement_import(self, constraint):
         """Test correct creation of single statement."""
         testfile = get_module_resource(
-            "account_bank_statement_import_camt_oca", "test_files", "test-camt053"
+            "account_statement_import_camt_oca", "test_files", "test-camt053"
         )
         with open(testfile, "rb") as datafile:
             camt_file = base64.b64encode(datafile.read())
 
-            self.env["account.bank.statement.import"].create(
-                {"attachment_ids": [(0, 0, {"name": "test file", "datas": camt_file})]}
-            ).import_file()
+            self.env["account.statement.import"].create(
+                {"statement_file": camt_file}
+            ).import_file_button()
 
             bank_st_record = self.env["account.bank.statement"].search(
                 [("name", "=", "1234Test/1")], limit=1
@@ -151,16 +151,16 @@ class TestImport(TransactionCase):
         "SequenceMixin._constrains_date_sequence",
         side_effect=False,
     )
-    def test_zip_import(self, constraint):
+    def _test_zip_import(self, constraint):
         """Test import of multiple statements from zip file."""
         testfile = get_module_resource(
-            "account_bank_statement_import_camt_oca", "test_files", "test-camt053.zip"
+            "account_statement_import_camt_oca", "test_files", "test-camt053.zip"
         )
         with open(testfile, "rb") as datafile:
             camt_file = base64.b64encode(datafile.read())
-            self.env["account.bank.statement.import"].create(
-                {"attachment_ids": [(0, 0, {"name": "test file", "datas": camt_file})]}
-            ).import_file()
+            self.env["account.statement.import"].create(
+                {"statement_file": camt_file}
+            ).import_file_button()
             bank_st_record = self.env["account.bank.statement"].search(
                 [("name", "in", ["1234Test/2", "1234Test/3"])]
             )
