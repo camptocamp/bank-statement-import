@@ -7,23 +7,26 @@ import difflib
 import pprint
 import tempfile
 
-
 from odoo.tests.common import TransactionCase
 from odoo.modules.module import get_module_resource
 
 
 class TestParser(TransactionCase):
     """Tests for the camt parser itself."""
+
     def setUp(self):
         super(TestParser, self).setUp()
         self.parser = self.env['account.bank.statement.import.camt.parser']
 
-    def _do_parse_test(self, inputfile, goldenfile):
+    def _do_parse_test(self, inputfile, goldenfile, merge_ref_name=False):
         testfile = get_module_resource(
             'account_bank_statement_import_camt_oca',
             'test_files',
             inputfile,
         )
+        if merge_ref_name:
+            self.parser = self.parser.with_context(merge_ref_name=True)
+
         with open(testfile, 'rb') as data:
             res = self.parser.parse(data.read())
             with tempfile.NamedTemporaryFile(mode='w+',
@@ -57,6 +60,12 @@ class TestParser(TransactionCase):
             'test-camt053-txdtls',
             'golden-camt053-txdtls.pydata')
 
+    def test_parse_txdtls_merge(self):
+        self._do_parse_test(
+            'test-camt053-txdtls',
+            'golden-camt053-txdtls_merge_ref_name.pydata',
+            merge_ref_name=True)
+
     def test_parse_no_ntry(self):
         self._do_parse_test(
             'test-camt053-no-ntry',
@@ -65,6 +74,7 @@ class TestParser(TransactionCase):
 
 class TestImport(TransactionCase):
     """Run test to import camt import."""
+
     transactions = [
         {
             'account_number': 'NL46ABNA0499998748',

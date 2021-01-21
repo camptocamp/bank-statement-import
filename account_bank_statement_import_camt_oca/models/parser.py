@@ -41,6 +41,7 @@ class CamtParser(models.AbstractModel):
         in a found node will be used to set a value."""
         if not isinstance(xpath_str, (list, tuple)):
             xpath_str = [xpath_str]
+
         for search_str in xpath_str:
             found_node = node.xpath(search_str, namespaces={'ns': ns})
             if found_node:
@@ -60,6 +61,20 @@ class CamtParser(models.AbstractModel):
                 './ns:AddtlNtryInf',
                 './ns:Refs/ns:InstrId',
             ], transaction, 'name', join_str='\n')
+        if self._get_journal_use_ref_as_label_stmt_import():
+            self.add_value_from_node(
+                ns, node, [
+                    './ns:RmtInf/ns:Strd/ns:CdtrRefInf/ns:Ref',
+                    './ns:Refs/ns:EndToEndId',
+                    './ns:Ntry/ns:AcctSvcrRef',
+                ], transaction, 'name2')
+            if (
+                transaction['name'] != '/'
+                and transaction['name2']
+                and transaction['name'] != transaction['name2']
+            ):
+                transaction['name'] += ' ' + transaction['name2']
+                del transaction['name2']
         # name
         self.add_value_from_node(
             ns, node, [
@@ -70,7 +85,7 @@ class CamtParser(models.AbstractModel):
             ns, node, [
                 './ns:RmtInf/ns:Strd/ns:CdtrRefInf/ns:Ref',
                 './ns:Refs/ns:EndToEndId',
-                './ns:Ntry/ns:AcctSvcrRef'
+                './ns:Ntry/ns:AcctSvcrRef',
             ],
             transaction, 'ref'
         )
@@ -123,13 +138,33 @@ class CamtParser(models.AbstractModel):
         self.add_value_from_node(
             ns, node, './ns:AddtlNtryInf', transaction, 'name')
         self.add_value_from_node(
-            ns, node, [
+            ns, node,
+            [
                 './ns:NtryDtls/ns:RmtInf/ns:Strd/ns:CdtrRefInf/ns:Ref',
                 './ns:NtryDtls/ns:Btch/ns:PmtInfId',
                 './ns:NtryDtls/ns:TxDtls/ns:Refs/ns:AcctSvcrRef'
             ],
             transaction, 'ref'
         )
+        if self._get_journal_use_ref_as_label_stmt_import():
+            self.add_value_from_node(
+                ns, node,
+                [
+                    './ns:NtryDtls/ns:RmtInf/ns:Strd/ns:CdtrRefInf/ns:Ref',
+                    './ns:NtryDtls/ns:Btch/ns:PmtInfId',
+                    './ns:NtryDtls/ns:TxDtls/ns:Refs/ns:AcctSvcrRef',
+                ],
+                transaction, 'name2', join_str='\n',
+            )
+            if (
+                transaction['name2']
+                and transaction['name2'] not in transaction['name']
+            ):
+                if transaction['name'] != '/' and transaction['name2']:
+                    transaction['name'] += ' ' + transaction['name2']
+                else:
+                    transaction['name'] = transaction['name2']
+                del transaction['name2']
 
         details_nodes = node.xpath(
             './ns:NtryDtls/ns:TxDtls', namespaces={'ns': ns})
@@ -254,3 +289,17 @@ class CamtParser(models.AbstractModel):
                     account_number = statement.pop('account_number')
                 statements.append(statement)
         return currency, account_number, statements
+
+    def _get_journal_use_ref_as_label_stmt_import(self):
+        res = False
+        merge_ref_name = self.env.context.get('merge_ref_name')
+
+        journal_id = self.env.context.get('journal_id')
+        if journal_id:
+            res = (
+                self.env['account.journal']
+                .browse(journal_id)
+                .use_ref_as_label_stmt_import
+            )
+        res = res or merge_ref_name
+        return res
