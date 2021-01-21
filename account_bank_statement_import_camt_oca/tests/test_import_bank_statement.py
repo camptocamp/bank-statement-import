@@ -143,7 +143,7 @@ class TestImport(TransactionCase):
                     line[key] == self.transactions[0][key]
                     for key in ['amount', 'date', 'ref']
                 ) and
-                line.bank_account_id.acc_number == 
+                line.bank_account_id.acc_number ==
                 self.transactions[0]['account_number']
                 for line in statement_lines
             ))

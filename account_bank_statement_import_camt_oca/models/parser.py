@@ -33,7 +33,7 @@ class CamtParser(models.AbstractModel):
         return amount
 
     def add_value_from_node(
-        self, ns, node, xpath_str, obj, attr_name, join_str=None):
+            self, ns, node, xpath_str, obj, attr_name, join_str=None):
         """Add value to object from first or all nodes found with xpath.
 
         If xpath_str is a list (or iterable), it will be seen as a series
@@ -78,7 +78,7 @@ class CamtParser(models.AbstractModel):
         # name
         self.add_value_from_node(
             ns, node, [
-                './ns:AddtlTxInf'
+                './ns:AddtlTxInf',
             ], transaction, 'note', join_str='\n')
         # eref
         self.add_value_from_node(
@@ -87,7 +87,7 @@ class CamtParser(models.AbstractModel):
                 './ns:Refs/ns:EndToEndId',
                 './ns:Ntry/ns:AcctSvcrRef',
             ],
-            transaction, 'ref',
+            transaction, 'ref'
         )
         amount = self.parse_amount(ns, node)
         if amount != 0.0:
@@ -114,7 +114,8 @@ class CamtParser(models.AbstractModel):
         # Get remote_account from iban or from domestic account:
         account_node = node.xpath(
             './ns:RltdPties/ns:%sAcct/ns:Id' % party_type,
-            namespaces={'ns': ns})
+            namespaces={'ns': ns}
+        )
         if account_node:
             iban_node = account_node[0].xpath(
                 './ns:IBAN', namespaces={'ns': ns})
@@ -137,8 +138,7 @@ class CamtParser(models.AbstractModel):
         self.add_value_from_node(
             ns, node, './ns:AddtlNtryInf', transaction, 'name')
         self.add_value_from_node(
-            ns,
-            node,
+            ns, node,
             [
                 './ns:NtryDtls/ns:RmtInf/ns:Strd/ns:CdtrRefInf/ns:Ref',
                 './ns:NtryDtls/ns:Btch/ns:PmtInfId',
@@ -216,10 +216,11 @@ class CamtParser(models.AbstractModel):
         self.add_value_from_node(
             ns, node, [
                 './ns:Acct/ns:Id/ns:IBAN',
-                './ns:Acct/ns:Id/ns:Othr/ns:Id'
-            ], result, 'account_number',
+                './ns:Acct/ns:Id/ns:Othr/ns:Id',
+            ], result, 'account_number'
         )
-        self.add_value_from_node(ns, node, './ns:Id', result, 'name')
+        self.add_value_from_node(
+            ns, node, './ns:Id', result, 'name')
         self.add_value_from_node(
             ns, node, './ns:Acct/ns:Ccy', result, 'currency')
         result['balance_start'], result['balance_end_real'] = (
@@ -233,7 +234,8 @@ class CamtParser(models.AbstractModel):
         if transactions:
             result['date'] = sorted(transactions,
                                     key=lambda x: x['date'],
-                                    reverse=True)[0]['date']
+                                    reverse=True
+                                    )[0]['date']
         return result
 
     def check_version(self, ns, root):
