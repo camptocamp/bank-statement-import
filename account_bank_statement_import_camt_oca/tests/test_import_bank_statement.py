@@ -2,13 +2,13 @@
 # Copyright 2017 Open Net Sàrl
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl.html).
 import base64
+from datetime import date
 import difflib
 import pprint
 import tempfile
-from datetime import date
 
-from odoo.modules.module import get_module_resource
 from odoo.tests.common import TransactionCase
+from odoo.modules.module import get_module_resource
 
 
 class TestParser(TransactionCase):
@@ -20,16 +20,17 @@ class TestParser(TransactionCase):
 
     def _do_parse_test(self, inputfile, goldenfile, merge_ref_name=False):
         testfile = get_module_resource(
-            'account_bank_statement_import_camt_oca', 'test_files', inputfile
+            'account_bank_statement_import_camt_oca',
+            'test_files',
+            inputfile,
         )
         if merge_ref_name:
             self.parser = self.parser.with_context(merge_ref_name=True)
 
         with open(testfile, 'rb') as data:
             res = self.parser.parse(data.read())
-            with tempfile.NamedTemporaryFile(
-                mode='w+', suffix='.pydata'
-            ) as temp:
+            with tempfile.NamedTemporaryFile(mode='w+',
+                                             suffix='.pydata') as temp:
                 pprint.pprint(res, temp, width=160)
                 goldenfile_res = get_module_resource(
                     'account_bank_statement_import_camt_oca',
@@ -39,38 +40,36 @@ class TestParser(TransactionCase):
                 with open(goldenfile_res, 'r') as golden:
                     temp.seek(0)
                     diff = list(
-                        difflib.unified_diff(
-                            golden.readlines(),
-                            temp.readlines(),
-                            golden.name,
-                            temp.name,
-                        )
-                    )
+                        difflib.unified_diff(golden.readlines(),
+                                             temp.readlines(),
+                                             golden.name,
+                                             temp.name))
                     if len(diff) > 2:
                         self.fail(
-                            "actual output doesn't match expected "
-                            + "output:\n%s" % "".join(diff)
-                        )
+                            "actual output doesn't match expected " +
+                            "output:\n%s" %
+                            "".join(diff))
 
     def test_parse(self):
-        self._do_parse_test('test-camt053', 'golden-camt053.pydata')
+        self._do_parse_test(
+            'test-camt053',
+            'golden-camt053.pydata')
 
     def test_parse_txdtls(self):
         self._do_parse_test(
-            'test-camt053-txdtls', 'golden-camt053-txdtls.pydata'
-        )
+            'test-camt053-txdtls',
+            'golden-camt053-txdtls.pydata')
 
     def test_parse_txdtls_merge(self):
         self._do_parse_test(
             'test-camt053-txdtls',
             'golden-camt053-txdtls_merge_ref_name.pydata',
-            merge_ref_name=True,
-        )
+            merge_ref_name=True)
 
     def test_parse_no_ntry(self):
         self._do_parse_test(
-            'test-camt053-no-ntry', 'golden-camt053-no-ntry.pydata'
-        )
+            'test-camt053-no-ntry',
+            'golden-camt053-no-ntry.pydata')
 
 
 class TestImport(TransactionCase):
@@ -105,30 +104,24 @@ class TestImport(TransactionCase):
 
     def setUp(self):
         super(TestImport, self).setUp()
-        bank = self.env['res.partner.bank'].create(
-            {
-                'acc_number': 'NL77ABNA0574908765',
-                'partner_id': self.env.ref('base.main_partner').id,
-                'company_id': self.env.ref('base.main_company').id,
-                'bank_id': self.env.ref('base.res_bank_1').id,
-            }
-        )
-        self.env['res.partner.bank'].create(
-            {
-                'acc_number': 'NL46ABNA0499998748',
-                'partner_id': self.env.ref('base.main_partner').id,
-                'company_id': self.env.ref('base.main_company').id,
-                'bank_id': self.env.ref('base.res_bank_1').id,
-            }
-        )
-        self.env['account.journal'].create(
-            {
-                'name': 'Bank Journal - (test camt)',
-                'code': 'TBNKCAMT',
-                'type': 'bank',
-                'bank_account_id': bank.id,
-            }
-        )
+        bank = self.env['res.partner.bank'].create({
+            'acc_number': 'NL77ABNA0574908765',
+            'partner_id': self.env.ref('base.main_partner').id,
+            'company_id': self.env.ref('base.main_company').id,
+            'bank_id': self.env.ref('base.res_bank_1').id,
+        })
+        self.env['res.partner.bank'].create({
+            'acc_number': 'NL46ABNA0499998748',
+            'partner_id': self.env.ref('base.main_partner').id,
+            'company_id': self.env.ref('base.main_company').id,
+            'bank_id': self.env.ref('base.res_bank_1').id,
+        })
+        self.env['account.journal'].create({
+            'name': 'Bank Journal - (test camt)',
+            'code': 'TBNKCAMT',
+            'type': 'bank',
+            'bank_account_id': bank.id,
+        })
 
     def test_statement_import(self):
         """Test correct creation of single statement."""
@@ -138,28 +131,22 @@ class TestImport(TransactionCase):
             'test-camt053',
         )
         with open(testfile, 'rb') as datafile:
-            action = (
-                self.env['account.bank.statement.import']
-                .create({'data_file': base64.b64encode(datafile.read())})
-                .import_file()
-            )
+            action = self.env['account.bank.statement.import'].create({
+                'data_file': base64.b64encode(datafile.read())
+            }).import_file()
 
-            statement_lines = (
-                self.env['account.bank.statement']
-                .browse(action['context']['statement_ids'])
-                .line_ids
-            )
-            self.assertTrue(
-                any(
-                    all(
-                        line[key] == self.transactions[0][key]
-                        for key in ['amount', 'date', 'ref']
-                    )
-                    and line.bank_account_id.acc_number
-                    == self.transactions[0]['account_number']
-                    for line in statement_lines
-                )
-            )
+            statement_lines = self.env['account.bank.statement'].browse(
+                action['context']['statement_ids']
+            ).line_ids
+            self.assertTrue(any(
+                all(
+                    line[key] == self.transactions[0][key]
+                    for key in ['amount', 'date', 'ref']
+                ) and
+                line.bank_account_id.acc_number == 
+                self.transactions[0]['account_number']
+                for line in statement_lines
+            ))
 
     def test_zip_import(self):
         """Test import of multiple statements from zip file."""
@@ -169,13 +156,10 @@ class TestImport(TransactionCase):
             'test-camt053.zip',
         )
         with open(testfile, 'rb') as datafile:
-            action = (
-                self.env['account.bank.statement.import']
-                .create({'data_file': base64.b64encode(datafile.read())})
-                .import_file()
-            )
+            action = self.env['account.bank.statement.import'].create({
+                'data_file': base64.b64encode(datafile.read()),
+            }).import_file()
 
             for statement in self.env['account.bank.statement'].browse(
-                action['context']['statement_ids']
-            ):
+                    action['context']['statement_ids']):
                 self.assertTrue(statement.line_ids)

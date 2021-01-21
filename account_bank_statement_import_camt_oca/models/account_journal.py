@@ -10,8 +10,7 @@ class AccountJournal(models.Model):
     use_ref_as_label_stmt_import = fields.Boolean()
 
     def _get_bank_statements_available_import_formats(self):
-        res = super(
-            AccountJournal, self
-        )._get_bank_statements_available_import_formats()
+        res = super(AccountJournal, self).\
+            _get_bank_statements_available_import_formats()
         res.extend([_('camt.053.001.02'), _('camt.054.001.02')])
         return res
