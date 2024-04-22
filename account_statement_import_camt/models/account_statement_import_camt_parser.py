@@ -9,7 +9,7 @@ from lxml import etree
 from odoo import _, models
 
 
-class CamtParser(models.AbstractModel):
+class AccountStatementImportCamtParser(models.AbstractModel):
     _name = "account.statement.import.camt.parser"
     _description = "Account Bank Statement Import CAMT parser"
 
