@@ -29,6 +29,13 @@ class TestGenerateBankStatement(TransactionCase):
                 "bank_id": cls.env.ref("base.res_bank_1").id,
             }
         )
+        suspense_account = cls.env["account.account"].create(
+            {
+                "code": "987654",
+                "name": "Suspense Account",
+                "account_type": "asset_current",
+            }
+        )
         cls.journal = cls.env["account.journal"].create(
             {
                 "name": "Bank Journal - (test camt)",
@@ -36,6 +43,7 @@ class TestGenerateBankStatement(TransactionCase):
                 "type": "bank",
                 "bank_account_id": bank.id,
                 "currency_id": eur_currency.id,
+                "suspense_account_id": suspense_account.id,
             }
         )
 

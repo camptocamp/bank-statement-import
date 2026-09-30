@@ -191,6 +191,13 @@ class TestImport(TransactionCase):
                 "bank_id": cls.env.ref("base.res_bank_1").id,
             }
         )
+        suspense_account = cls.env["account.account"].create(
+            {
+                "code": "987654",
+                "name": "Suspense Account",
+                "account_type": "asset_current",
+            }
+        )
         cls.env["account.journal"].create(
             {
                 "name": "Bank Journal - (test camt)",
@@ -198,6 +205,7 @@ class TestImport(TransactionCase):
                 "type": "bank",
                 "bank_account_id": bank.id,
                 "currency_id": eur.id,
+                "suspense_account_id": suspense_account.id,
             }
         )
 
