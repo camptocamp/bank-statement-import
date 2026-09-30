@@ -154,6 +154,9 @@ class TestImport(TransactionCase):
                 "type": "bank",
                 "bank_account_id": bank.id,
                 "currency_id": eur.id,
+                "suspense_account_id": (
+                    cls.env.company.account_journal_suspense_account_id.id
+                ),
             }
         )
 
